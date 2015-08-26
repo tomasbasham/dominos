@@ -1,0 +1,20 @@
+language: python
+
+python:
+  - "2.7"
+  - "3.2"
+
+sudo: false
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - python: "3.2"
+
+script:
+  - py.test
+
+notifications:
+  email: false
+  slack:
+    secure: qVbzNehqssfpzbw9ELc3pj4URPd0xj+V+a0ymQ8vA9HKb3B8qmrwljm9bfm+fxdbTwqoxF+B0wyPfvRU0nNYLlyZhwbGsQTRUP9ceTwUhyLoFcVapqCl7on+hk3BCcQREjJcGSTKGpCUvE+XUGNckz3VYo2Wr3k+18qBkwbv6AVUpr4DUuNtrLFs0cQ0ICc4e4XwFOWJk8RisRrekxacjvZwDLHyLwRlxjyRGP4JM24zKB+0FyGObcWtuotjLBA0Lj5uLbFv3TXNEWNuFf3OSon9vDORwMJPFgXR8w+DA28eAkLxQbxSUBJTxKkHJf1OPExzmsksuLbm7vW8/Zjk1tsmhEzUAQ6rlV3038oL9L+fMYYv43Z9W7JzF11dQUm5WIHGJ/2WsF1s0C4glhoDwVPim4CHuV476jkhmHb0oQQypttGNUZKcMiBgTA0YyRY0Km3V3EVhYtzGat+bB731yqo/6Ea2qNCskUnSJSa3ncCFaJsUYxfP3NXlYLvzEGqMOX6qniMRuCdsBdgUspJsZ2KaNV5L9/eCD59Bz4F6q1ratr1dIK7CMM4aSTaHEn3HB8L6WRvl0W0dspNMRgDo614TIFE/38RyxJnY1R3Ms+arIEai1MFI9PhotvsLA/C9LcC+lBXQ3CboYaj0HcXCqHKFKHBDmFkhyfI5ckXbdg=

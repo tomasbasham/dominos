@@ -1,0 +1,4 @@
+pytest==2.6.4
+pytest-cov
+ratelimit==1.0.1
+requests
