@@ -29,7 +29,7 @@ def enum(**enums):
 VARIANTS = enum(PERSONAL=0, SMALL=1, MEDIUM=2, LARGE=3)
 PAYMENT_METHODS = enum(CASH_ON_DELIVERY=0, CARD=1, PAYPAL=2)
 
-class Dominos:
+class Client:
   '''
   API class for the UK version of Dominos
   pizza website.

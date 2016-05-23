@@ -1,5 +1,5 @@
 class Version(object):
-  """Version of the package"""
+  '''Version of the package'''
 
   def __setattr__(self, *args):
     raise TypeError('cannot modify immutable instance')

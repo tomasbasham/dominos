@@ -37,8 +37,8 @@ To use this package you simply have to instantiate a Dominos object:
 
 .. code:: python
 
-    from dominos import Dominos
-    api = Dominos()
+    from dominos.api import Client
+    api = Client()
     response = api.get_nearest_store('AB12 000')
     print(response.json())
 
