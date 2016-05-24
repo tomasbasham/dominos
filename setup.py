@@ -6,7 +6,7 @@ def readme():
     return file.read()
 
 setup(name='dominos',
-      version=Version('0.0.2').number,
+      version=Version('0.0.3').number,
       description='Dominos Pizza API',
       long_description=readme().strip(),
       author='Tomas Basham',
