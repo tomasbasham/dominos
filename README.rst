@@ -1,6 +1,7 @@
-dominos
-=======
-.. image:: https://travis-ci.org/tomasbasham/dominos.svg?branch=master
+dominos |build|
+===============
+
+.. |build| image:: https://travis-ci.org/tomasbasham/dominos.svg?branch=master
     :target: https://travis-ci.org/tomasbasham/dominos
 
 Dominos Pizza remains today a closed system, not officially offering a public API from which to order delicious baked pizzas. However with the invent of their multiple mobile applications and their own website having been reimplemented in AngularJS it was apparent these all used some undocumented public API.
