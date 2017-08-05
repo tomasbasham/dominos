@@ -1,4 +1,5 @@
 pytest==2.6.4
-pytest-cov
-ratelimit==1.1.0
-requests
+pytest-cov==2.5.1
+pylint==1.7.2
+ratelimit==1.4.0
+requests==2.14.2

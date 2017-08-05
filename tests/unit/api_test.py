@@ -1,5 +1,5 @@
 from dominos.api import Client
-from tests import *
+from tests import unittest
 
 class TestClient(unittest.TestCase):
-  pass
+    pass
