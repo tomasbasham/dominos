@@ -11,7 +11,8 @@ def get_epoch():
     epoch time. Required for some calls to
     the remote.
 
-    :return: String representing the current epoch time.
+    :return: Current epoch time.
+    :rtype: string
     '''
     return calendar.timegm(time.gmtime())
 
@@ -19,10 +20,11 @@ def enum(**enums):
     '''
     Utility function to create a simple
     enum-like data type. Behind the scenes it
-    is just an array.
+    is just a list.
 
     :param list enums: A list of key value pairs.
     :return: A simple list.
+    :rtype: list
     '''
     return type('Enum', (), enums)
 
@@ -56,7 +58,8 @@ class Client(object):
         Clear out the current session on the remote
         and setup a new one.
 
-        :return: A response object.
+        :return: A response from having expired the current session.
+        :rtype: requests.Response
         '''
         response = self.session.get(self.__url('/Home/SessionExpire'))
 
@@ -75,7 +78,8 @@ class Client(object):
         Set the cross site request forgery token for
         each subsequent request.
 
-        :return: A response object.
+        :return: A response having cleared the current store.
+        :rtype: requests.Response
         '''
         response = self.session.get(self.__url('/Store/Reset'))
 
@@ -92,8 +96,9 @@ class Client(object):
         Search for dominos pizza stores using a search
         term.
 
-        :param search: Search term.
-        :return: A response object.
+        :param string search: Search term.
+        :return: A response containing stores matching the search criteria.
+        :rtype: requests.Response
         '''
         params = {'search': search}
         response = self.session.get(self.__url('/storefindermap/storenamesearch'), params=params)
@@ -110,8 +115,9 @@ class Client(object):
         This will only search for local stores indicating
         delivery status and payment details.
 
-        :param postcode: A postcode.
-        :return: A response object.
+        :param string postcode: A postcode.
+        :return: A response containing stores matching the postcode.
+        :rtype: requests.Response
         '''
         params = {'SearchText': postcode}
         response = self.session.get(self.__url('/storefindermap/storesearch'), params=params)
@@ -128,9 +134,10 @@ class Client(object):
         system on the remote. Requires a store ID and
         a delivery postcode.
 
-        :param idx: Store id.
-        :param postcode: A postcode.
-        :return: A response object.
+        :param int idx: Store id.
+        :param string postcode: A postcode.
+        :return: A response having initialised the delivery system.
+        :rtype: requests.Response
         '''
         params = {'fulfilmentmethod': 'delivery', 'postcode': postcode, 'storeid': idx}
         response = self.session.post(self.__url('/Journey/Initialize'), json=params)
@@ -147,7 +154,8 @@ class Client(object):
         be called at some point after initialising the
         delivery system.
 
-        :return: A response object.
+        :return: A response containing a store context.
+        :rtype: requests.Response
         '''
         params = {'_': get_epoch()}
         response = self.session.get(self.__url('/ProductCatalog/GetStoreContext'), params=params)
@@ -162,8 +170,9 @@ class Client(object):
         '''
         Retrieve the menu categories from the selected store.
 
-        :param context: The store context.
-        :return: A response object.
+        :param dict context: The store context.
+        :return: A response containing the menu categories for a store.
+        :rtype: requests.Response
         '''
         session_context = context['sessionContext']
         response = self.session.get(self.__url('/ProductCatalog/GetStoreCatalogCategories'), params=session_context)
@@ -178,8 +187,9 @@ class Client(object):
         '''
         Retrieve the menu from the selected store.
 
-        :param context: The store context.
-        :return: A response object.
+        :param dict context: The store context.
+        :return: A response containing the menu for a store.
+        :rtype: requests.Response
         '''
         session_context = context['sessionContext']
         response = self.session.get(self.__url('/ProductCatalog/GetStoreCatalog'), params=session_context)
@@ -194,7 +204,8 @@ class Client(object):
         '''
         Retrieve the basket for the current session.
 
-        :return: A response object.
+        :return: A response containing the basket for the current session.
+        :rtype: requests.Response
         '''
         response = self.session.get(self.__url('/CheckoutBasket/GetBasket'))
 
@@ -207,10 +218,11 @@ class Client(object):
         '''
         Add an item to the current basket.
 
-        :param item: Item from menu.
-        :param variant: Item SKU id.
-        :param options: Additional options, such as quantity.
-        :return: A response object, or None if an item type is not recognised.
+        :param dict item: Item from menu.
+        :param int variant: Item SKU id.
+        :param dict options: Additional options, such as quantity.
+        :return: A response having added an item to the current basket, or None if an item type is not recognised.
+        :rtype: requests.Response
         '''
         if options is None:
             options = {}
@@ -228,10 +240,11 @@ class Client(object):
         '''
         Add a pizza to the current basket.
 
-        :param item: Item from menu.
-        :param variant: Item SKU id. Some defaults are defined in the VARIANTS enum.
-        :param options: Additional options, such as quantity.
-        :return: A response object.
+        :param dict item: Item from menu.
+        :param int variant: Item SKU id. Some defaults are defined in the VARIANTS enum.
+        :param dict options: Additional options, such as quantity.
+        :return: A response having added a pizza to the current basket.
+        :rtype: requests.Response
         '''
         if options is None:
             options = {}
@@ -253,10 +266,11 @@ class Client(object):
         '''
         Add a side to the current basket.
 
-        :param item: Item from menu.
-        :param variant: Item SKU id. Some defaults are defined in the VARIANTS enum.
-        :param options: Additional options, such as quantity.
-        :return: A response object.
+        :param dict item: Item from menu.
+        :param int variant: Item SKU id. Some defaults are defined in the VARIANTS enum.
+        :param dict options: Additional options, such as quantity.
+        :return: A response having added a side to the current basket.
+        :rtype: requests.Response
         '''
         if options is None:
             options = {}
@@ -277,8 +291,9 @@ class Client(object):
         '''
         Remove an item from the current basket.
 
-        :param idx: Basket item id.
-        :return: A response object.
+        :param int idx: Basket item id.
+        :return: A response having removed an item from the current basket.
+        :rtype: requests.Response
         '''
         params = {'basketItemId': idx, 'wizardItemDelete': False}
         response = self.session.post(self.__url('/Basket/RemoveBasketItem'), params=params)
@@ -300,7 +315,8 @@ class Client(object):
         be accepted as mastercard will likely
         reject the origin of the request.
 
-        :return: A response object.
+        :return: A response containing availbale payment options.
+        :rtype: requests.Response
         '''
         response = self.session.post(self.__url('/PaymentOptions/GetPaymentDetailsData'))
 
@@ -315,8 +331,9 @@ class Client(object):
         Select the payment method going to be
         used to make a purchase.
 
-        :param method: Payment method id.
-        :return: A response object.
+        :param int method: Payment method id.
+        :return: A response having set the payment option.
+        :rtype: requests.Response
         '''
         params = {'paymentMethod': method}
         response = self.session.post(self.__url('/PaymentOptions/SetPaymentMethod'), json=params)
@@ -332,7 +349,8 @@ class Client(object):
         Proceed with payment using the payment
         method selected earlier.
 
-        :return: A response object.
+        :return: A response having processes the payment.
+        :rtype: requests.Response
         '''
         params = {'__RequestVerificationToken': self.session.cookies, 'method': 'submit'}
         response = self.session.post(self.__url('/paymentoptions/proceed'), json=params)
@@ -347,7 +365,8 @@ class Client(object):
         Helper method to generate fully qualified URIs
         pertaining to specific API actions.
 
-        :param path: Relative API path to resource.
+        :param string path: Relative API path to resource.
         :return: Fully qualified URI to API resource.
+        :rtype: string
         '''
         return self.BASE_URL + path
