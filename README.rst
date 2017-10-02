@@ -4,9 +4,13 @@ dominos |build|
 .. |build| image:: https://travis-ci.org/tomasbasham/dominos.svg?branch=master
     :target: https://travis-ci.org/tomasbasham/dominos
 
-Dominos Pizza remains today a closed system, not officially offering a public API from which to order delicious baked pizzas. However with the invent of their multiple mobile applications and their own website having been reimplemented in AngularJS it was apparent these all used some undocumented public API.
+Dominos Pizza remains today a closed system, not officially offering a public
+API from which to order delicious baked pizzas. However with the invent of their
+multiple mobile applications and their own website having been reimplemented in
+AngularJS it was apparent these all used some undocumented public API.
 
-This packages implements an abstract layer to the Dominos Pizza (UK) API, returning raw response objects from which JSON payloads can be read.
+This packages implements an abstract layer to the Dominos Pizza (UK) API,
+returning raw response objects from which JSON payloads can be read.
 
 Installation
 ------------
@@ -43,7 +47,9 @@ To use this package you simply have to instantiate a Dominos object:
     response = api.get_nearest_store('AB12 000')
     print(response.json())
 
-This returns the nearest store to the supplied postcode. There are many other methods implemented in this package to return store menus, add items to a basket and checkout.
+This returns the nearest store to the supplied postcode. There are many other
+methods implemented in this package to return store menus, add items to a basket
+and checkout.
 
 Contributing
 ------------
