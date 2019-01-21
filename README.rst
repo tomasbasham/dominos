@@ -38,18 +38,26 @@ Installing the latest version from Github:
 Usage
 -----
 
-To use this package you simply have to instantiate a Dominos object:
+To use this package you simply have to instantiate a Client object:
 
 .. code:: python
 
-    from dominos.api import Client
+    from dominos.api import *
     api = Client()
-    response = api.get_nearest_store('AB12 000')
-    print(response.json())
+    store = api.get_nearest_store("AB1 0CD")
+    print(store.name)
 
 This returns the nearest store to the supplied postcode. There are many other
 methods implemented in this package to return store menus, add items to a basket
 and checkout.
+
+An example of viewing the store menu:
+
+.. code:: python
+
+    menu = api.get_menu(store)
+    potato_wedges = menu.get_product_by_name("Potato Wedges")
+    print(potato_wedges.price)
 
 Contributing
 ------------
