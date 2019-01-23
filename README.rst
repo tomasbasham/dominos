@@ -58,13 +58,22 @@ An example of viewing the store menu:
     menu = api.get_menu(store)
     potato_wedges = menu.get_product_by_name("Potato Wedges")
     print(potato_wedges.price)
+
+IMPORTANT NOTE
+--------------
+Never call more than one api function in the same line! This causes issues with the API that may cause data to be lost or incorrectly processed.
+
+.. code:: python
     
-**IMPORTANT NOTE** Never call ``menu.get_product_by_name`` inside another function such as ``api.add_item_to_basket``. Always store the result of ``menu.get_product_by_name`` in a variable before passing it into another function!
+    api.add_item_to_basket(item=menu.get_item_by_name("Original Cheese & Tomato"), variant=dominos.VARIANTS.MEDIUM)
+
+This code calls two api functions on one line - ``api.add_item_to_basket`` and ``menu.get_item_by_name``. You should do this instead:
 
 .. code:: python
 
-    pizza = menu.get_product_by_name("Original Cheese & Tomato")
-    api.add_item_to_basket(item=pizza, variant=dominos.VARIANTS.MEDIUM)
+    potato_wedges = api.get_item_by_name("Original Cheese & Tomato")
+    api.add_item_to_basket(item=potato_wedges, vairant=dominos.VARIANTS.MEDIUM)
+
 
 Contributing
 ------------
