@@ -71,7 +71,7 @@ This code calls two api functions on one line - ``api.add_item_to_basket`` and `
 
 .. code:: python
 
-    potato_wedges = api.get_item_by_name("Original Cheese & Tomato")
+    potato_wedges = menu.get_item_by_name("Original Cheese & Tomato")
     api.add_item_to_basket(item=potato_wedges, vairant=dominos.VARIANTS.MEDIUM)
 
 
