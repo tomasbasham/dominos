@@ -1,6 +1,5 @@
 import calendar
 import time
-from colorama import *
 from ratelimit import rate_limited
 
 import requests
