@@ -38,7 +38,7 @@ Installing the latest version from Github:
 Usage
 -----
 
-To use this package you simply have to instantiate a Client object:
+To use this package you simply have to instantiate a ``Client`` object:
 
 .. code:: python
 
@@ -58,6 +58,13 @@ An example of viewing the store menu:
     menu = api.get_menu(store)
     potato_wedges = menu.get_product_by_name("Potato Wedges")
     print(potato_wedges.price)
+    
+**IMPORTANT NOTE** Never call ``menu.get_product_by_name`` inside another function such as ``api.add_item_to_basket``. Always store the result of ``menu.get_product_by_name`` in a variable before passing it into another function!
+
+.. code:: python
+
+    pizza = menu.get_product_by_name("Original Cheese & Tomato")
+    api.add_item_to_basket(item=pizza, variant=dominos.VARIANTS.MEDIUM)
 
 Contributing
 ------------
