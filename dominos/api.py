@@ -51,12 +51,12 @@ class Item(object):
     Stores necessary information on menu items
     :param raw_data: The raw data from a menu search
     """
-    def __init__(self, raw_data, subcategory):
+    def __init__(self, raw_data):
         self.name = raw_data['name'].replace("®", "").replace("™", "")
         self.price = raw_data['price']
         self.id = raw_data['productId']
         self.skus = raw_data['productSkus']
-        self.type = subcategory
+        self.type = raw_data['type']
 
 
 class Menu(object):
@@ -64,14 +64,9 @@ class Menu(object):
     Stores a list of Item objects retrieved from a Get Menu call
     :param raw_data: The raw data from a Get Menu call
     """
+
     def __init__(self, raw_data):
-        self.categories = []
-        self.items = []
-        for category in raw_data:
-            self.categories.append(category['name'])
-            for subcategory in category['subcategories']:
-                for item in subcategory['products']:
-                    self.items.append(Item(item, subcategory['type']))
+        self.items = [Item(x) for category in raw_data for x in category['subcategories'][0]['products']]
 
     def get_product_by_name(self, name):
         """
@@ -105,8 +100,6 @@ class Client(object):
     BASE_URL = 'https://www.dominos.co.uk'
 
     def __init__(self):
-        init()
-
         self.session = requests.session()
 
         self.reset_session()
@@ -317,14 +310,7 @@ class Client(object):
     @rate_limited(1, 5)
     def get_payment_options(self):
         '''
-        Retrieve a series of payment options
-        alongside the card url used to
-        authorise payments through mastercard
-        datacash service.
-
-        There is no guarantee the card url will
-        be accepted as mastercard will likely
-        reject the origin of the request.
+        Returns a set of payment options along with the currently selected payment option
 
         :return: A response object.
         '''
