@@ -72,7 +72,43 @@ This code calls two api functions on one line - ``api.add_item_to_basket`` and `
 .. code:: python
 
     potato_wedges = menu.get_item_by_name("Original Cheese & Tomato")
-    api.add_item_to_basket(item=potato_wedges, vairant=dominos.VARIANTS.MEDIUM)
+    api.add_item_to_basket(item=potato_wedges, vairant=dominos.VARIANTS.PERSONAL)
+
+Full Usage Example
+------------------
+With a ``Client`` object declared, you will need a ``Store`` to retrieve the menu from. This can be obtained through ``get_nearest_store({postcode})``. For example:
+
+.. code:: python
+
+    api = Client()
+    store = api.get_nearest_store("AB1 0CD")
+    
+Once a ``Store`` object is retrieved, you can get a ``Menu`` object from it with ``get_menu({store})``.
+
+.. code:: python
+    
+    menu = api.get_menu(store)
+    
+You can now search through this menu by item name. This will return an ``Item`` object which can be added to the basket. Note that the name must be spelled perfectly but is not cases-sensitive.
+
+.. code:: python
+
+    pizza = menu.get_product_by_name("Original Cheese & Tomato")
+
+This can now be added to the basket with:
+
+.. code:: python
+
+    api.add_item_to_basket(item=pizza, variant=dominos.VARIANTS.LARGE)
+    
+There are four available ``Variants``: ``PERSONAL, SMALL, MEDIUM, LARGE``. Note that when adding a side, you should always use ``PERSONAL``. ``add_item_to_basket`` also accepts a ``quantity`` argument.
+
+Unfortunately, the API in it's current state does not support order placement. For now, we can print out the basket information like this:
+
+.. code:: python
+
+    basket = api.get_basket()
+    print(basket.json())
 
 
 Contributing
