@@ -75,7 +75,7 @@ class Menu(object):
 
     def get_product_by_name(self, name):
         """
-        Gets an Item from the Menu by name. Note that the name is not case-sensitive but
+        Gets a Item from the Menu by name. Note that the name is not case-sensitive but
         must be spelt correctly. None will be returned if no matching name is found.
         Note that the Trademark Symbols have been removed.
         :param name: The name of the item
@@ -112,7 +112,7 @@ class Client(object):
         self.reset_session()
         self.reset_store()
 
-    @rate_limited(1)
+    @rate_limited(1, 5)
     def reset_session(self):
         '''
         Clear out the current session on the remote
@@ -130,7 +130,7 @@ class Client(object):
 
         return response
 
-    @rate_limited(1)
+    @rate_limited(1, 5)
     def reset_store(self):
         '''
         Clears out the current store and gets a cookie.
@@ -148,7 +148,7 @@ class Client(object):
 
         return response
 
-    @rate_limited(1)
+    @rate_limited(1, 5)
     def get_stores(self, search):
         '''
         Search for dominos pizza stores using a search
@@ -165,7 +165,7 @@ class Client(object):
 
         return response
 
-    @rate_limited(1)
+    @rate_limited(1, 5)
     def get_nearest_store(self, postcode):
         '''
         Search for domino pizza stores using a postcode.
@@ -183,7 +183,7 @@ class Client(object):
 
         return Store(response.json())
 
-    @rate_limited(1)
+    @rate_limited(1, 5)
     def set_delivery_system(self, idx, postcode):
         '''
         Set local cookies by initialising the delivery
@@ -202,7 +202,7 @@ class Client(object):
 
         return response
 
-    @rate_limited(1)
+    @rate_limited(1, 5)
     def get_menu(self, store):
         '''
         Retrieve the menu from the selected store.
@@ -223,7 +223,7 @@ class Client(object):
 
         return Menu(response.json())
 
-    @rate_limited(1)
+    @rate_limited(1, 5)
     def get_basket(self):
         '''
         Retrieve the basket for the current session.
@@ -299,22 +299,22 @@ class Client(object):
         return response
 
     @rate_limited(1, 5)
-    def remove_item_from_basket(self, item):
+    def remove_item_from_basket(self, idx):
         '''
         Remove an item from the current basket.
 
-        :param item: Basket item object.
+        :param item: Basket Item idx.
         :return: A response object.
         '''
-        params = {'basketItemId': item.id, 'wizardItemDelete': False}
+        params = {'basketItemId': idx, 'wizardItemDelete': False}
         response = self.session.post(self.__url('/Basket/RemoveBasketItem'), params=params)
 
         if response.status_code != 200:
-            raise self.ApiError('Cannot remove {} from basket: {}'.format(item.name, response.status_code))
+            raise self.ApiError('Cannot remove {} from basket: {}'.format(idx, response.status_code))
 
         return response
 
-    @rate_limited(1)
+    @rate_limited(1, 5)
     def get_payment_options(self):
         '''
         Retrieve a series of payment options
@@ -335,7 +335,7 @@ class Client(object):
 
         return response
 
-    @rate_limited(1)
+    @rate_limited(1, 5)
     def set_payment_method(self, method=PAYMENT_METHODS.PAYPAL):
         '''
         Select the payment method going to be
@@ -352,7 +352,7 @@ class Client(object):
 
         return response
 
-    @rate_limited(1)
+    @rate_limited(1, 5)
     def process_payment(self):
         '''
         Proceed with payment using the payment
