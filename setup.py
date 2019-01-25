@@ -8,8 +8,8 @@ def readme():
 
 setup(
     name='dominos',
-    version=Version('0.0.4').number,
-    description='Dominos Pizza API',
+    version=Version('0.0.5').number,
+    description='Dominos Pizza UK unofficial API wrapper for Python.',
     long_description=readme().strip(),
     author='Tomas Basham',
     author_email='me@tomasbasham.co.uk',
