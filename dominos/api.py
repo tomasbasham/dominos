@@ -52,7 +52,7 @@ class Item(object):
     :param raw_data: The raw data from a menu search
     """
     def __init__(self, raw_data):
-        self.name = raw_data['name'].replace("®", "").replace("™", "")
+        self.name = raw_data['name'].replace("\u2122", "").replace("\u00ae", "")
         self.price = raw_data['price']
         self.id = raw_data['productId']
         self.skus = raw_data['productSkus']
