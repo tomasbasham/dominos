@@ -1,365 +1,291 @@
-import calendar
-import time
-from ratelimit import rate_limited
+'''
+Dominos Pizza API public interface.
+
+This module includes the client object used to make requests to the Dominos
+Pizza UK API. Additionally it provides some global constants that may be used
+as configuration optons to some API methods.
+'''
+from ratelimit import limits, RateLimitException
+from backoff import on_exception, expo
+
+from dominos.exception import ApiError
+from dominos.models import Stores, Menu, Basket
+from dominos.utils import enum, update_session_headers
 
 import requests
 
-
-def get_epoch():
-    '''
-    Utility function used to get the current
-    epoch time. Required for some calls to
-    the remote.
-
-    :return: String representing the current epoch time.
-    '''
-    return calendar.timegm(time.gmtime())
-
-
-def enum(**enums):
-    '''
-    Utility function to create a simple
-    enum-like data type. Behind the scenes it
-    is just an array.
-
-    :param list enums: A list of key value pairs.
-    :return: A simple list.
-    '''
-    return type('Enum', (), enums)
-
-
-VARIANTS = enum(PERSONAL=0, SMALL=1, MEDIUM=2, LARGE=3)
-PAYMENT_METHODS = enum(CASH_ON_DELIVERY=0, CARD=1, PAYPAL=2)
-
-
-class Store(object):
-    """
-    Parses raw data returned from the API and stores it in an easy-to-use object
-    :param raw_data: The raw data returned from a Local Store search
-    """
-    def __init__(self, raw_data):
-        local_store = raw_data['localStore']
-        self.id = local_store['id']
-        self.name = local_store['name']
-        self.collection = local_store['isCollectionAvailable']
-        self.delivery = raw_data['isDeliveryAvailableFromStore']
-        self.menu_version = local_store['menuVersion']
-
-
-class Item(object):
-    """
-    Stores necessary information on menu items
-    :param raw_data: The raw data from a menu search
-    """
-    def __init__(self, raw_data):
-        self.name = raw_data['name'].replace("\u2122", "").replace("\u00ae", "")
-        self.price = raw_data['price']
-        self.id = raw_data['productId']
-        self.skus = raw_data['productSkus']
-        self.type = raw_data['type']
-
-
-class Menu(object):
-    """
-    Stores a list of Item objects retrieved from a Get Menu call
-    :param raw_data: The raw data from a Get Menu call
-    """
-
-    def __init__(self, raw_data):
-        self.items = [Item(x) for category in raw_data for x in category['subcategories'][0]['products']]
-
-    def get_product_by_name(self, name):
-        """
-        Gets a Item from the Menu by name. Note that the name is not case-sensitive but
-        must be spelt correctly. None will be returned if no matching name is found.
-        Note that the Trademark Symbols have been removed.
-        :param name: The name of the item
-        :return: An item object matching the search, or None if none were found
-        """
-
-        for item in self.items:
-            if item.name.lower() == name.lower():
-                return item
-
-        return None
-
+VARIANT = enum(PERSONAL=0, SMALL=1, MEDIUM=2, LARGE=3)
+PAYMENT_METHOD = enum(CASH_ON_DELIVERY=0, CARD=1, PAYPAL=2, VISA_CHECKOUT=4)
+FULFILMENT_METHOD = enum(COLLECTION=0, DELIVERY=1)
 
 class Client(object):
     '''
-    API class for the UK version of Dominos
-    pizza website.
+    API class for the UK version of Dominos pizza website.
     '''
-
-    class ApiError(Exception):
-        '''
-        API exception class. It is exactly the
-        same as a regular exception.
-        '''
-        pass
-
     BASE_URL = 'https://www.dominos.co.uk'
 
-    def __init__(self):
-        self.session = requests.session()
-
-        self.reset_session()
+    def __init__(self, session=requests.session()):
+        self.session = update_session_headers(session)
         self.reset_store()
 
-    @rate_limited(1, 5)
-    def reset_session(self):
+    def new_session(self, session):
         '''
-        Clear out the current session on the remote
-        and setup a new one.
+        Clear out the current session on the remote and setup a new one.
 
-        :return: A response object.
+        :return: A response from having expired the current session.
+        :rtype: requests.Response
         '''
-        response = self.session.get(self.__url('/Home/SessionExpire'))
-
-        if response.status_code != 200:
-            raise self.ApiError('Failed to clear session: {}'.format(response.status_code))
-
-        self.session = requests.session()
-        self.session.headers.update({'content-type': 'application/json; charset=utf-8'})
+        response = self.__get('/Home/SessionExpire')
+        self.session = update_session_headers(session)
 
         return response
 
-    @rate_limited(1, 5)
     def reset_store(self):
         '''
-        Clears out the current store and gets a cookie.
-        Set the cross site request forgery token for
-        each subsequent request.
+        Clears out the current store and gets a cookie. Set the cross site
+        request forgery token for each subsequent request.
 
-        :return: A response object.
+        :return: A response having cleared the current store.
+        :rtype: requests.Response
         '''
-        response = self.session.get(self.__url('/Store/Reset'))
+        response = self.__get('/Store/Reset')
 
-        if response.status_code != 200:
-            raise self.ApiError('Cannot get cookie: {}'.format(response.status_code))
-
-        self.session.headers.update({'X-XSRF-TOKEN': self.session.cookies['XSRF-TOKEN']})
+        token = self.session.cookies['XSRF-TOKEN']
+        self.session.headers.update({'X-XSRF-TOKEN': token})
 
         return response
 
-    @rate_limited(1, 5)
-    def get_stores(self, search):
+    def get_stores(self, search_term):
         '''
-        Search for dominos pizza stores using a search
-        term.
+        Search for dominos pizza stores using a search term.
 
-        :param search: Search term.
-        :return: A response object.
+        :param string search: Search term.
+        :return: A list of nearby stores matching the search term.
+        :rtype: list
         '''
-        params = {'search': search}
-        response = self.session.get(self.__url('/storefindermap/storenamesearch'), params=params)
+        params = {'SearchText': search_term}
+        response = self.__get('/storefindermap/storesearch', params=params)
 
-        if response.status_code != 200:
-            raise self.ApiError('Cannot fetch stores: {}'.format(response.status_code))
+        return Stores(response.json())
 
-        return response
-
-    @rate_limited(1, 5)
     def get_nearest_store(self, postcode):
         '''
-        Search for domino pizza stores using a postcode.
-        This will only search for local stores indicating
-        delivery status and payment details.
+        Search for domino pizza stores using a postcode. This will only search
+        for local stores indicating delivery status and payment details.
 
-        :param postcode: A postcode.
-        :return: A Store object.
+        :param string postcode: A postcode.
+        :return: A response containing stores matching the postcode.
+        :rtype: requests.Response
         '''
-        params = {'SearchText': postcode}
-        response = self.session.get(self.__url('/storefindermap/storesearch'), params=params)
+        return self.get_stores(postcode).local_store
 
-        if response.status_code != 200:
-            raise self.ApiError('Cannot fetch nearest store for {}: {}'.format(postcode, response.status_code))
-
-        return Store(response.json())
-
-    @rate_limited(1, 5)
-    def set_delivery_system(self, idx, postcode):
+    def set_delivery_system(self, store, postcode, fulfilment_method=FULFILMENT_METHOD.DELIVERY):
         '''
-        Set local cookies by initialising the delivery
-        system on the remote. Requires a store ID and
-        a delivery postcode.
+        Set local cookies by initialising the delivery system on the remote.
+        Requires a store ID and a delivery postcode.
 
-        :param idx: Store id.
-        :param postcode: A postcode.
-        :return: A response object.
+        :param Store store: Store id.
+        :param string postcode: A postcode.
+        :return: A response having initialised the delivery system.
+        :rtype: requests.Response
         '''
-        params = {'fulfilmentmethod': 'delivery', 'postcode': postcode, 'storeid': idx}
-        response = self.session.post(self.__url('/Journey/Initialize'), json=params)
+        method = 'delivery' if fulfilment_method == FULFILMENT_METHOD.DELIVERY else 'collection'
 
-        if response.status_code != 200:
-            raise self.ApiError('Cannot create cookie: {}'.format(response.status_code))
+        params = {
+            'fulfilmentMethod': method,
+            'postcode': postcode,
+            'storeid': store.store_id
+        }
 
-        return response
+        return self.__post('/Journey/Initialize', json=params)
 
-    @rate_limited(1, 5)
     def get_menu(self, store):
         '''
         Retrieve the menu from the selected store.
 
-        :param store: The store to retrieve menu from.
-        :return: A Menu object.
+        :param Store store: A store.
+        :return: The store menu.
+        :rtype: Menu
         '''
-
         params = {
-            "collectionOnly": store.delivery,
-            "menuVersion": store.menu_version,
-            "storeId": store.id,
+            'collectionOnly': not store.delivery_available,
+            'menuVersion': store.menu_version,
+            'storeId': store.store_id,
         }
-        response = self.session.get(self.__url('/ProductCatalog/GetStoreCatalog'), params=params)
 
-        if response.status_code != 200:
-            raise self.ApiError('Cannot get menu: {}'.format(response.status_code))
-
+        response = self.__get('/ProductCatalog/GetStoreCatalog', params=params)
         return Menu(response.json())
 
-    @rate_limited(1, 5)
     def get_basket(self):
         '''
         Retrieve the basket for the current session.
 
-        :return: A response object.
+        :return: A response containing the basket for the current session.
+        :rtype: requests.Response
         '''
-        response = self.session.get(self.__url('/CheckoutBasket/GetBasket'))
+        response = self.__get('/CheckoutBasket/GetBasket')
+        return Basket(response.json())
 
-        if response.status_code != 200:
-            raise self.ApiError('Cannot get basket: {}'.format(response.status_code))
-
-        return response
-
-    def add_item_to_basket(self, item, variant, quantity=1):
+    def add_item_to_basket(self, item, variant=VARIANT.MEDIUM, quantity=1):
         '''
         Add an item to the current basket.
 
-        :param item: Item from menu.
-        :param variant: Item SKU id.
-        :param quantity: The quantity of item to be added
-        :return: A response object, or None if an item type is not recognised.
+        :param Item item: Item from menu.
+        :param int variant: Item SKU id. Ignored if the item is a side.
+        :param int quantity: The quantity of item to be added.
+        :return: A response having added an item to the current basket.
+        :rtype: requests.Response
         '''
-
         item_type = item.type
 
         if item_type == 'Pizza':
             return self.add_pizza_to_basket(item, variant, quantity)
         elif item_type == 'Side':
-            return self.add_side_to_basket(item, variant, quantity)
+            return self.add_side_to_basket(item, quantity)
         return None
 
-    @rate_limited(1, 5)
-    def add_pizza_to_basket(self, item, variant=VARIANTS.MEDIUM, quantity=1):
+    def add_pizza_to_basket(self, item, variant=VARIANT.MEDIUM, quantity=1):
         '''
         Add a pizza to the current basket.
 
-        :param item: Item from menu.
-        :param variant: Item SKU id. Some defaults are defined in the VARIANTS enum.
-        :param quantity: The quantity of pizzas to be added
-        :return: A response object.
+        :param Item item: Item from menu.
+        :param int variant: Item SKU id. Some defaults are defined in the VARIANT enum.
+        :param int quantity: The quantity of pizza to be added.
+        :return: A response having added a pizza to the current basket.
+        :rtype: requests.Response
         '''
-
-        item_variant = item.skus[variant]
+        item_variant = item[variant]
         ingredients = item_variant['ingredients'].update([36, 42])
 
-        params = {'stepId': 0, 'quantity': quantity, 'sizeId': variant, 'productId': item.id, 'ingredients': ingredients, 'productIdHalfTwo': 0, 'ingredientsHalfTwo': [], 'recipeReferrer': 0}
-        response = self.session.post(self.__url('/Basket/AddPizza/'), json=params)
+        params = {
+            'stepId': 0,
+            'quantity': quantity,
+            'sizeId': variant,
+            'productId': item.item_id,
+            'ingredients': ingredients,
+            'productIdHalfTwo': 0,
+            'ingredientsHalfTwo': [],
+            'recipeReferrer': 0
+        }
 
-        if response.status_code != 200:
-            raise self.ApiError('Cannot add {} {} to basket: {}'.format(item_variant['name'], item['name'], response.status_code))
+        return self.__post('/Basket/AddPizza', json=params)
 
-        return response
-
-    @rate_limited(1, 5)
-    def add_side_to_basket(self, item, variant=VARIANTS.PERSONAL, quantity=1):
+    def add_side_to_basket(self, item, quantity=1):
         '''
         Add a side to the current basket.
 
-        :param item: Item from menu.
-        :param variant: Item SKU id. Some defaults are defined in the VARIANTS enum.
-        :param quantity: The quantity of sides to be added
-        :return: A response object.
+        :param Item item: Item from menu.
+        :param int quantity: The quantity of side to be added.
+        :return: A response having added a side to the current basket.
+        :rtype: requests.Response
         '''
+        item_variant = item[VARIANT.PERSONAL]
 
-        item_variant = item.skus[variant]
+        params = {
+            'productSkuId': item_variant['productSkuId'],
+            'quantity': quantity,
+            'ComplimentaryItems': []
+        }
 
-        params = {'productSkuId': item_variant['productSkuId'], 'quantity': quantity, 'ComplimentaryItems': []}
-        response = self.session.post(self.__url('/Basket/AddProduct'), json=params)
+        return self.__post('/Basket/AddProduct', json=params)
 
-        if response.status_code != 200:
-            raise self.ApiError('Cannot add {} {} to basket: {}'.format(item_variant['name'], item['name'], response.status_code))
-
-        return response
-
-    @rate_limited(1, 5)
     def remove_item_from_basket(self, idx):
         '''
         Remove an item from the current basket.
 
-        :param item: Basket Item idx.
-        :return: A response object.
+        :param int idx: Basket item id.
+        :return: A response having removed an item from the current basket.
+        :rtype: requests.Response
         '''
-        params = {'basketItemId': idx, 'wizardItemDelete': False}
-        response = self.session.post(self.__url('/Basket/RemoveBasketItem'), params=params)
+        params = {
+            'basketItemId': idx,
+            'wizardItemDelete': False
+        }
 
-        if response.status_code != 200:
-            raise self.ApiError('Cannot remove {} from basket: {}'.format(idx, response.status_code))
+        return self.__post('/Basket/RemoveBasketItem', json=params)
 
-        return response
-
-    @rate_limited(1, 5)
-    def get_payment_options(self):
+    def set_payment_method(self, method=PAYMENT_METHOD.CASH_ON_DELIVERY):
         '''
-        Returns a set of payment options along with the currently selected payment option
+        Select the payment method going to be used to make a purchase.
 
-        :return: A response object.
-        '''
-        response = self.session.post(self.__url('/PaymentOptions/GetPaymentDetailsData'))
-
-        if response.status_code != 200:
-            raise self.ApiError('Cannot get payment details: {}'.format(response.status_code))
-
-        return response
-
-    @rate_limited(1, 5)
-    def set_payment_method(self, method=PAYMENT_METHODS.PAYPAL):
-        '''
-        Select the payment method going to be
-        used to make a purchase.
-
-        :param method: Payment method id.
-        :return: A response object.
+        :param int method: Payment method id.
+        :return: A response having set the payment option.
+        :rtype: requests.Response
         '''
         params = {'paymentMethod': method}
-        response = self.session.post(self.__url('/PaymentOptions/SetPaymentMethod'), json=params)
+        return self.__post('/PaymentOptions/SetPaymentMethod', json=params)
 
-        if response.status_code != 200:
-            raise self.ApiError('Cannot set payment method: {}'.format(response.status_code))
+    def set_delivery_address(self):
+        '''
+        Set the delivery address for the order.
+        '''
+        pass
 
-        return response
-
-    @rate_limited(1, 5)
     def process_payment(self):
         '''
-        Proceed with payment using the payment
-        method selected earlier.
+        Proceed with payment using the payment method selected earlier.
 
-        :return: A response object.
+        :return: A response having processes the payment.
+        :rtype: requests.Response
         '''
-        params = {'__RequestVerificationToken': self.session.cookies, 'method': 'submit'}
-        response = self.session.post(self.__url('/PaymentOptions/Proceed'), json=params)
+        params = {
+            '__RequestVerificationToken': self.session.cookies,
+            'method': 'submit'
+        }
+
+        return self.__post('/PaymentOptions/Proceed', json=params)
+
+    def __get(self, path, **kargs):
+        '''
+        Make a HTTP GET request to the Dominos UK API with the given parameters
+        for the current session.
+
+        :param string path: The API endpoint path.
+        :params list kargs: A list of arguments.
+        :return: A response from the Dominos UK API.
+        :rtype: response.Response
+        '''
+        return self.__call_api(self.session.get, path, **kargs)
+
+    def __post(self, path, **kargs):
+        '''
+        Make a HTTP POST request to the Dominos UK API with the given
+        parameters for the current session.
+
+        :param string path: The API endpoint path.
+        :params list kargs: A list of arguments.
+        :return: A response from the Dominos UK API.
+        :rtype: response.Response
+        '''
+        return self.__call_api(self.session.post, path, **kargs)
+
+    @on_exception(expo, (ApiError, RateLimitException), max_tries=10)
+    @limits(calls=5, period=1)
+    def __call_api(self, verb, path, **kargs):
+        '''
+        Make a HTTP request to the Dominos UK API with the given parameters for
+        the current session.
+
+        :param verb func: HTTP method on the session.
+        :param string path: The API endpoint path.
+        :params list kargs: A list of arguments.
+        :return: A response from the Dominos UK API.
+        :rtype: response.Response
+        '''
+        response = verb(self.__url(path), **kargs)
 
         if response.status_code != 200:
-            raise self.ApiError('Cannot process payment: {}'.format(response.status_code))
+            raise ApiError('{}: {}'.format(response.status_code, response))
 
         return response
 
     def __url(self, path):
         '''
-        Helper method to generate fully qualified URIs
-        pertaining to specific API actions.
+        Helper method to generate fully qualified URIs pertaining to specific
+        API actions.
 
-        :param path: Relative API path to resource.
+        :param string path: Relative API path to resource.
         :return: Fully qualified URI to API resource.
+        :rtype: string
         '''
         return self.BASE_URL + path
