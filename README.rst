@@ -1,5 +1,5 @@
-dominos |build|
-===============
+dominos |build| |maintainability|
+=================================
 
 Dominos Pizza remains today a closed system, not officially offering a public
 API from which to order delicious baked pizzas. However with the invent of
@@ -172,3 +172,7 @@ This project is licensed under the `MIT License <LICENSE.txt>`_.
 
 .. |build| image:: https://travis-ci.com/tomasbasham/dominos.svg?branch=master
     :target: https://travis-ci.com/tomasbasham/dominos
+
+.. |maintainability| image:: https://api.codeclimate.com/v1/badges/77198135c362816e5d78/maintainability
+    :target: https://codeclimate.com/github/tomasbasham/dominos/maintainability
+    :alt: Maintainability
