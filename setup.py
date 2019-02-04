@@ -1,5 +1,6 @@
 from setuptools import setup
-from dominos.version import Version
+
+import dominos
 
 def readme():
     '''Read README file'''
@@ -8,8 +9,8 @@ def readme():
 
 setup(
     name='dominos',
-    version=Version('0.0.4').number,
-    description='Dominos Pizza API',
+    version=dominos.__version__,
+    description='Dominos Pizza UK API wrapper',
     long_description=readme().strip(),
     author='Tomas Basham',
     author_email='me@tomasbasham.co.uk',
