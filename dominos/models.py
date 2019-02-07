@@ -108,4 +108,5 @@ class Basket(object):
     Encapsulates a basket.
     '''
     def __init__(self, data):
+        self.total = data['totalPrice']
         self.items = data['items']
