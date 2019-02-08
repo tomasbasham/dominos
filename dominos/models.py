@@ -54,7 +54,7 @@ class Menu(object):
     Encapsulates a store menu.
     '''
     def __init__(self, data):
-        self.items = [Item(i) for category in data for i in category['subcategories'][0]['products']]
+        self.items = [Item(i) for category in data for subcategory in category['subcategories'] for i in subcategory['products']]
 
     def get_product_by_name(self, name):
         '''
