@@ -155,8 +155,14 @@ class Client(object):
         :return: A response having added a pizza to the current basket.
         :rtype: requests.Response
         '''
+        
+        # Add any additional toppings
         item_variant = item[variant]
         ingredients = [42, 36] + item_variant['ingredients'] + options.get("ingredients", [])
+
+        # Remove unwanted toppings
+        remove_ingredients = options.get("remove_ingredients", [])
+        ingredients = [x for x in ingredients if x not in remove_ingredients]
 
         params = {
             'stepId': 0,
