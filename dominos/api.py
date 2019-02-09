@@ -126,40 +126,41 @@ class Client(object):
         response = self.__get('/CheckoutBasket/GetBasket')
         return Basket(response.json())
 
-    def add_item_to_basket(self, item, variant=VARIANT.MEDIUM, quantity=1):
+    def add_item_to_basket(self, item, variant=VARIANT.MEDIUM, options={'quantity': 1}):
         '''
         Add an item to the current basket.
 
         :param Item item: Item from menu.
         :param int variant: Item SKU id. Ignored if the item is a side.
-        :param int quantity: The quantity of item to be added.
+        :param dict options: Dictionary of options like quantity and an ingredients list
         :return: A response having added an item to the current basket.
         :rtype: requests.Response
         '''
         item_type = item.type
 
         if item_type == 'Pizza':
-            return self.add_pizza_to_basket(item, variant, quantity)
+            return self.add_pizza_to_basket(item, variant, options)
         elif item_type == 'Side':
-            return self.add_side_to_basket(item, quantity)
+            return self.add_side_to_basket(item, options['quantity'])
         return None
 
-    def add_pizza_to_basket(self, item, variant=VARIANT.MEDIUM, quantity=1):
+    def add_pizza_to_basket(self, item, variant=VARIANT.MEDIUM, options={}):
         '''
         Add a pizza to the current basket.
 
         :param Item item: Item from menu.
         :param int variant: Item SKU id. Some defaults are defined in the VARIANT enum.
-        :param int quantity: The quantity of pizza to be added.
+        :param dict options: Dictionary of options like quantity and an ingredients list. If nothing is
+        specified then a default quantity of 1 and the default ingredients for the pizza will be used.
         :return: A response having added a pizza to the current basket.
         :rtype: requests.Response
         '''
         item_variant = item[variant]
-        ingredients = item_variant['ingredients'].update([36, 42])
+        ingredients = [42, 36] + item_variant['ingredients'] + options.get("ingredients", [])
 
         params = {
             'stepId': 0,
-            'quantity': quantity,
+            'quantity': options['quantity'],
             'sizeId': variant,
             'productId': item.item_id,
             'ingredients': ingredients,
