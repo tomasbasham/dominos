@@ -165,6 +165,8 @@ ID twice.
         'ingredients': [124, 8, 8]
     }
 
+To remove any toppings, simple pass a ``remove_ingredients`` property in ``options``. Add the IDs the same way you would in ``ingredients``.
+
 At this time, the Dominos library does not support order placement, although it
 should be entirely possible to accept orders that are marked for cash upon
 delivery (not all stores allow for this). For now the basket information can be
