@@ -84,8 +84,8 @@ values into separate variables:
 
 .. code:: python
 
-    potato_wedges = menu.get_item_by_name('Original Cheese & Tomato')
-    api.add_item_to_basket(item=potato_wedges, vairant=VARIANT.PERSONAL)
+    pizza = menu.get_item_by_name('Original Cheese & Tomato')
+    api.add_item_to_basket(item=pizza, vairant=VARIANT.MEDIUM)
 
 Full Usage Example
 ~~~~~~~~~~~~~~~~~~
@@ -131,7 +131,7 @@ argument.
 
 This will return a ``Menu`` object that can be search by item name or
 alternatively indexed by item ID. The menu item name must be spelled correctly
-but is not cases-sensitive. If the item is found io the menu then an ``Item``
+but is not cases-sensitive. If the item is found in the menu then an ``Item``
 object will be returned which may be added to the basket:
 
 .. code:: python
@@ -144,7 +144,26 @@ There are four available variants: ``PERSONAL``, ``SMALL``, ``MEDIUM`` and
 always be ``PERSONAL``.
 
 By defaut ``add_item_to_basket`` will add only 1 item to the basket at a time
-but this may be changed by passing a ``quantity`` argument.
+but this may be changed by using a dictionary of ``options``.
+
+.. code:: python
+
+    options = {
+        'quantity': 2,
+    }
+    api.add_item_to_basket(pizza, variant=VARIANT.LARGE, options=options)
+    
+It is also possible to add extra toppings. At this time, a complete list of
+toppings is not available, so for now we can add Stuffed Crust (``[124]``) and Extra
+Ground Beef (``[8, 8]``). Note that if you want 'extra' of a topping, just add the
+ID twice.
+
+.. code::python
+
+    options = {
+        'quantity': 1,
+        'ingredients': [124, 8, 8]
+    }
 
 At this time, the Dominos library does not support order placement, although it
 should be entirely possible to accept orders that are marked for cash upon
