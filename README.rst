@@ -158,7 +158,7 @@ toppings is not available, so for now we can add Stuffed Crust (``[124]``) and E
 Ground Beef (``[8, 8]``). Note that if you want 'extra' of a topping, just add the
 ID twice.
 
-.. code::python
+.. code:: python
 
     options = {
         'quantity': 1,
