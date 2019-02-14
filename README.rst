@@ -70,6 +70,8 @@ To grab the store menu:
     menu = api.get_menu(store)
     potato_wedges = menu.get_product_by_name('Potato Wedges')
     print(potato_wedges.price)
+    
+``get_product_by_name`` is not case sensitive.
 
 **Note**: Never call more than one api function in the same line! This causes
 issues with the API that may result in data being incorrectly processed.
@@ -153,19 +155,39 @@ but this may be changed by using a dictionary of ``options``.
     }
     api.add_item_to_basket(pizza, variant=VARIANT.LARGE, options=options)
     
-It is also possible to add extra toppings. At this time, a complete list of
-toppings is not available, so for now we can add Stuffed Crust (``[124]``) and Extra
-Ground Beef (``[8, 8]``). Note that if you want 'extra' of a topping, just add the
-ID twice.
+It is also possible to add extra toppings. In it's current state, the library
+offers two ways to add ingredients. You can add by ingredient IDs or names.
+To add ingredients by ID, use the ``add_ingredients`` function.
 
 .. code:: python
 
-    options = {
-        'quantity': 1,
-        'ingredients': [124, 8, 8]
-    }
+    pizza.add_ingredients(124, 8, 8)
 
-To remove any toppings, simple pass a ``remove_ingredients`` property in ``options``. Add the IDs the same way you would in ``ingredients``.
+Note that having the same ID twice will give 'Extra' of the topping.
+To remove any toppings, simple pass use the ``remove_ingredient`` function
+the same way.
+
+To search for toppings by name, you need an ``IngredientList``. This can be
+retrieved as follows:
+
+.. code:: python
+
+    ingredients = api.get_available_ingredients(pizza, VARIANT.MEDIUM, store)
+    
+To search for an ID by the ingredient's name, use ``get_by_name``.
+
+.. code:: python
+
+    beef = ingredients.get_by_name("Ground Beef")
+    
+To add any number of ingredients by name, you can use a function from
+``IngredientList`` called ``add_to_pizza``.
+
+.. code:: python
+
+    ingredients.add_to_pizza(cheese_tomato, "Ground Beef", "Domino's Stuffed Crust", "Burger Sauce")
+
+None of the ``IngredientList`` functions are case sensitive.
 
 At this time, the Dominos library does not support order placement, although it
 should be entirely possible to accept orders that are marked for cash upon
