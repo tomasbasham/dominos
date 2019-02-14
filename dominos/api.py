@@ -9,7 +9,7 @@ from ratelimit import limits, RateLimitException
 from backoff import on_exception, expo
 
 from dominos.exception import ApiError
-from dominos.models import Stores, Menu, Basket
+from dominos.models import Stores, Menu, Basket, IngredientList
 from dominos.utils import enum, update_session_headers
 
 import requests
@@ -126,6 +126,26 @@ class Client(object):
         response = self.__get('/CheckoutBasket/GetBasket')
         return Basket(response.json())
 
+    def get_available_ingredients(self, item, size, store):
+        """
+        Retrieves an IngredientList of ingredients that can be added/removed from the pizza
+        by name.
+        :param item: The item to find ingredients for
+        :param dominos.VARIANT size: The size of the pizza to be ordered
+        :param store: The store which the order will be placed at
+        :return: IngredientList: A list of available ingredients
+        """
+
+        params = {
+            'isoCode': "en-GB",
+            'sizeId': size,
+            'id': item.item_id,
+            'storeId': store.store_id
+        }
+
+        response = self.__get("/PizzaCustomisation/PizzaViewModelBySize", params=params)
+        return IngredientList(response.json())
+
     def add_item_to_basket(self, item, variant=VARIANT.MEDIUM, options={'quantity': 1}):
         '''
         Add an item to the current basket.
@@ -155,14 +175,8 @@ class Client(object):
         :return: A response having added a pizza to the current basket.
         :rtype: requests.Response
         '''
-        
-        # Add any additional toppings
-        item_variant = item[variant]
-        ingredients = [42, 36] + item_variant['ingredients'] + options.get("ingredients", [])
 
-        # Remove unwanted toppings
-        remove_ingredients = options.get("remove_ingredients", [])
-        ingredients = [x for x in ingredients if x not in remove_ingredients]
+        ingredients = item.ingredients
 
         params = {
             'stepId': 0,
@@ -173,8 +187,8 @@ class Client(object):
             'productIdHalfTwo': 0,
             'ingredientsHalfTwo': [],
             'recipeReferrer': 0
-        }
 
+        }
         return self.__post('/Basket/AddPizza', json=params)
 
     def add_side_to_basket(self, item, quantity=1):
