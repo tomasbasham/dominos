@@ -135,7 +135,6 @@ class Client(object):
         :param store: The store which the order will be placed at
         :return: IngredientList: A list of available ingredients
         """
-
         params = {
             'isoCode': "en-GB",
             'sizeId': size,
