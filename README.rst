@@ -185,7 +185,7 @@ To add any number of ingredients by name, you can use a function from
 
 .. code:: python
 
-    ingredients.add_to_pizza(cheese_tomato, "Ground Beef", "Domino's Stuffed Crust", "Burger Sauce")
+    ingredients.add_to_pizza(pizza, "Ground Beef", "Domino's Stuffed Crust", "Burger Sauce")
 
 None of the ``IngredientList`` functions are case sensitive.
 
