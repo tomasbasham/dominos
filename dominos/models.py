@@ -152,13 +152,10 @@ class IngredientList(object):
     """
     def __init__(self, data):
         data = data['halfOne']
-        # Get all topping categories separately
-        self.crusts = {strip_unicode_characters(x['name'].lower()): x['id'] for x in data['availableCrusts']}
-        self.cheeses = {strip_unicode_characters(x['name'].lower()): x['id'] for x in data['availableCheeses']}
-        self.sauces = {strip_unicode_characters(x['name'].lower()): x['id'] for x in data['availableSauces']}
-        self.toppings = {strip_unicode_characters(x['name'].lower()): x['id'] for x in data['availableToppings']}
-        # Merge the list for later searching
-        self.all = {**self.crusts, **self.cheeses, **self.sauces, **self.toppings}
+        self.toppings = {strip_unicode_characters(x['name'].lower()): x['id'] for x in data['availableCrusts']}
+        self.toppings.update({strip_unicode_characters(x['name'].lower()): x['id'] for x in data['availableCheeses']})
+        self.toppings.update({strip_unicode_characters(x['name'].lower()): x['id'] for x in data['availableSauces']})
+        self.toppings.update({strip_unicode_characters(x['name'].lower()): x['id'] for x in data['availableToppings']})
 
     def get_by_name(self, name):
         """
@@ -167,7 +164,7 @@ class IngredientList(object):
         :return id: The ID of the ingredient
         """
         try:
-            return self.all[name.lower()]
+            return self.toppings[name.lower()]
         except KeyError:
             raise ApiError("'{}' was not found.".format(name))
 
