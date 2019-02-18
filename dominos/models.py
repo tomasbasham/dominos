@@ -5,6 +5,8 @@ from dominos.utils import strip_unicode_characters
 from dominos.exception import ApiError
 
 BASE_URL = 'https://www.dominos.co.uk'
+TOPPINGS = ['availableCrusts', 'availableCheeses', 'availableSauces', 'availableToppings']
+
 
 class Stores(object):
     '''
@@ -152,10 +154,7 @@ class IngredientList(object):
     """
     def __init__(self, data):
         data = data['halfOne']
-        self.toppings = {strip_unicode_characters(x['name'].lower()): x['id'] for x in data['availableCrusts']}
-        self.toppings.update({strip_unicode_characters(x['name'].lower()): x['id'] for x in data['availableCheeses']})
-        self.toppings.update({strip_unicode_characters(x['name'].lower()): x['id'] for x in data['availableSauces']})
-        self.toppings.update({strip_unicode_characters(x['name'].lower()): x['id'] for x in data['availableToppings']})
+        self.toppings = {strip_unicode_characters(x['name'].lower()): x['id'] for c in TOPPINGS for x in data[c]}
 
     def get_by_name(self, name):
         """
