@@ -78,7 +78,7 @@ issues with the API that may result in data being incorrectly processed.
 
 .. code:: python
 
-    api.add_item_to_basket(item=menu.get_item_by_name("Original Cheese & Tomato"), variant=VARIANTS.MEDIUM)
+    api.add_item_to_basket(item=menu.get_item_by_name("Original Cheese & Tomato"), variant=VARIANT.MEDIUM)
 
 This code calls two api functions - ``api.add_item_to_basket`` and
 ``menu.get_item_by_name``. Instead it is recommended to store intermediate
