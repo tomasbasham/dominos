@@ -87,7 +87,7 @@ values into separate variables:
 .. code:: python
 
     pizza = menu.get_item_by_name('Original Cheese & Tomato')
-    api.add_item_to_basket(item=pizza, vairant=VARIANT.MEDIUM)
+    api.add_item_to_basket(item=pizza, variant=VARIANT.MEDIUM)
 
 Full Usage Example
 ~~~~~~~~~~~~~~~~~~
