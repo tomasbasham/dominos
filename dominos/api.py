@@ -9,7 +9,7 @@ from ratelimit import limits, RateLimitException
 from backoff import on_exception, expo
 
 from dominos.exception import ApiError
-from dominos.models import Stores, Menu, Basket
+from dominos.models import Stores, Menu, Basket, IngredientList
 from dominos.utils import enum, update_session_headers
 
 import requests
@@ -126,48 +126,68 @@ class Client(object):
         response = self.__get('/CheckoutBasket/GetBasket')
         return Basket(response.json())
 
-    def add_item_to_basket(self, item, variant=VARIANT.MEDIUM, quantity=1):
+    def get_available_ingredients(self, item, size, store):
+        """
+        Retrieves an IngredientList of ingredients that can be added/removed from the pizza
+        by name.
+        :param item: The item to find ingredients for
+        :param dominos.VARIANT size: The size of the pizza to be ordered
+        :param store: The store which the order will be placed at
+        :return: IngredientList: A list of available ingredients
+        """
+        params = {
+            'isoCode': "en-GB",
+            'sizeId': size,
+            'id': item.item_id,
+            'storeId': store.store_id
+        }
+
+        response = self.__get("/PizzaCustomisation/PizzaViewModelBySize", params=params)
+        return IngredientList(response.json())
+
+    def add_item_to_basket(self, item, variant=VARIANT.MEDIUM, options={'quantity': 1}):
         '''
         Add an item to the current basket.
 
         :param Item item: Item from menu.
         :param int variant: Item SKU id. Ignored if the item is a side.
-        :param int quantity: The quantity of item to be added.
+        :param dict options: Dictionary of options like quantity and an ingredients list
         :return: A response having added an item to the current basket.
         :rtype: requests.Response
         '''
         item_type = item.type
 
         if item_type == 'Pizza':
-            return self.add_pizza_to_basket(item, variant, quantity)
+            return self.add_pizza_to_basket(item, variant, options)
         elif item_type == 'Side':
-            return self.add_side_to_basket(item, quantity)
+            return self.add_side_to_basket(item, options['quantity'])
         return None
 
-    def add_pizza_to_basket(self, item, variant=VARIANT.MEDIUM, quantity=1):
+    def add_pizza_to_basket(self, item, variant=VARIANT.MEDIUM, options={}):
         '''
         Add a pizza to the current basket.
 
         :param Item item: Item from menu.
         :param int variant: Item SKU id. Some defaults are defined in the VARIANT enum.
-        :param int quantity: The quantity of pizza to be added.
+        :param dict options: Dictionary of options like quantity and an ingredients list. If nothing is
+        specified then a default quantity of 1 and the default ingredients for the pizza will be used.
         :return: A response having added a pizza to the current basket.
         :rtype: requests.Response
         '''
-        item_variant = item[variant]
-        ingredients = item_variant['ingredients'].update([36, 42])
+
+        ingredients = item.ingredients
 
         params = {
             'stepId': 0,
-            'quantity': quantity,
+            'quantity': options['quantity'],
             'sizeId': variant,
             'productId': item.item_id,
             'ingredients': ingredients,
             'productIdHalfTwo': 0,
             'ingredientsHalfTwo': [],
             'recipeReferrer': 0
-        }
 
+        }
         return self.__post('/Basket/AddPizza', json=params)
 
     def add_side_to_basket(self, item, quantity=1):

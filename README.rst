@@ -70,13 +70,15 @@ To grab the store menu:
     menu = api.get_menu(store)
     potato_wedges = menu.get_product_by_name('Potato Wedges')
     print(potato_wedges.price)
+    
+``get_product_by_name`` is not case sensitive.
 
 **Note**: Never call more than one api function in the same line! This causes
 issues with the API that may result in data being incorrectly processed.
 
 .. code:: python
 
-    api.add_item_to_basket(item=menu.get_item_by_name("Original Cheese & Tomato"), variant=VARIANTS.MEDIUM)
+    api.add_item_to_basket(item=menu.get_item_by_name("Original Cheese & Tomato"), variant=VARIANT.MEDIUM)
 
 This code calls two api functions - ``api.add_item_to_basket`` and
 ``menu.get_item_by_name``. Instead it is recommended to store intermediate
@@ -84,8 +86,8 @@ values into separate variables:
 
 .. code:: python
 
-    potato_wedges = menu.get_item_by_name('Original Cheese & Tomato')
-    api.add_item_to_basket(item=potato_wedges, vairant=VARIANT.PERSONAL)
+    pizza = menu.get_item_by_name('Original Cheese & Tomato')
+    api.add_item_to_basket(item=pizza, variant=VARIANT.MEDIUM)
 
 Full Usage Example
 ~~~~~~~~~~~~~~~~~~
@@ -131,7 +133,7 @@ argument.
 
 This will return a ``Menu`` object that can be search by item name or
 alternatively indexed by item ID. The menu item name must be spelled correctly
-but is not cases-sensitive. If the item is found io the menu then an ``Item``
+but is not cases-sensitive. If the item is found in the menu then an ``Item``
 object will be returned which may be added to the basket:
 
 .. code:: python
@@ -144,7 +146,48 @@ There are four available variants: ``PERSONAL``, ``SMALL``, ``MEDIUM`` and
 always be ``PERSONAL``.
 
 By defaut ``add_item_to_basket`` will add only 1 item to the basket at a time
-but this may be changed by passing a ``quantity`` argument.
+but this may be changed by using a dictionary of ``options``.
+
+.. code:: python
+
+    options = {
+        'quantity': 2,
+    }
+    api.add_item_to_basket(pizza, variant=VARIANT.LARGE, options=options)
+    
+It is also possible to add extra toppings. In it's current state, the library
+offers two ways to add ingredients. You can add by ingredient IDs or names.
+To add ingredients by ID, use the ``add_ingredients`` function.
+
+.. code:: python
+
+    pizza.add_ingredients(124, 8, 8)
+
+Note that having the same ID twice will give 'Extra' of the topping.
+To remove any toppings, simple pass use the ``remove_ingredient`` function
+the same way.
+
+To search for toppings by name, you need an ``IngredientList``. This can be
+retrieved as follows:
+
+.. code:: python
+
+    ingredients = api.get_available_ingredients(pizza, VARIANT.MEDIUM, store)
+    
+To search for an ID by the ingredient's name, use ``get_by_name``.
+
+.. code:: python
+
+    beef = ingredients.get_by_name("Ground Beef")
+    
+To add any number of ingredients by name, you can use a function from
+``IngredientList`` called ``add_to_pizza``.
+
+.. code:: python
+
+    ingredients.add_to_pizza(pizza, "Ground Beef", "Domino's Stuffed Crust", "Burger Sauce")
+
+None of the ``IngredientList`` functions are case sensitive.
 
 At this time, the Dominos library does not support order placement, although it
 should be entirely possible to accept orders that are marked for cash upon
