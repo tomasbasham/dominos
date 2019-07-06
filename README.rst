@@ -52,7 +52,7 @@ To use this package simply instantiate a ``Client`` object:
 
 .. code:: python
 
-    from dominos import Client, VARIANT
+    from dominos import Client, VARIANT, FULFILMENT_METHOD
 
     api = Client()
     store = api.get_nearest_store('AB12 000')
@@ -76,7 +76,7 @@ issues with the API that may result in data being incorrectly processed.
 
 .. code:: python
 
-    api.add_item_to_basket(item=menu.get_item_by_name("Original Cheese & Tomato"), variant=VARIANTS.MEDIUM)
+    api.add_item_to_basket(item=menu.get_item_by_name("Original Cheese & Tomato"), variant=VARIANT.MEDIUM)
 
 This code calls two api functions - ``api.add_item_to_basket`` and
 ``menu.get_item_by_name``. Instead it is recommended to store intermediate
@@ -84,8 +84,8 @@ values into separate variables:
 
 .. code:: python
 
-    potato_wedges = menu.get_item_by_name('Original Cheese & Tomato')
-    api.add_item_to_basket(item=potato_wedges, vairant=VARIANT.PERSONAL)
+    pizza = menu.get_item_by_name('Original Cheese & Tomato')
+    api.add_item_to_basket(item=pizza, variant=VARIANT.PERSONAL)
 
 Full Usage Example
 ~~~~~~~~~~~~~~~~~~
